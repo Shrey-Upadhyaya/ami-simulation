@@ -1,0 +1,78 @@
+services:
+  mosquitto:
+    image: eclipse-mosquitto:2
+    container_name: ami-mosquitto
+    ports:
+      - "31883:1883"
+      - "39001:9001"
+    volumes:
+      - ./config/mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf
+      - mosquitto_data:/mosquitto/data
+      - mosquitto_log:/mosquitto/log
+    networks:
+      - ami-network
+    restart: unless-stopped
+
+  influxdb:
+    image: influxdb:2.7
+    container_name: ami-influxdb
+    ports:
+      - "8086:8086"
+    environment:
+      DOCKER_INFLUXDB_INIT_MODE: setup
+      DOCKER_INFLUXDB_INIT_USERNAME: admin
+      DOCKER_INFLUXDB_INIT_PASSWORD: ami_password
+      DOCKER_INFLUXDB_INIT_ORG: ami-org
+      DOCKER_INFLUXDB_INIT_BUCKET: meter_readings
+      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: ami-influx-token
+    volumes:
+      - influxdb_data:/var/lib/influxdb2
+    networks:
+      - ami-network
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: ami-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: ami_user
+      POSTGRES_PASSWORD: ami_password
+      POSTGRES_DB: ami_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - ami-network
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:10.2.0
+    container_name: ami-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: ami_admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_SERVER_ROOT_URL: "http://localhost:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning
+    networks:
+      - ami-network
+    depends_on:
+      - influxdb
+    restart: unless-stopped
+
+volumes:
+  mosquitto_data:
+  mosquitto_log:
+  influxdb_data:
+  postgres_data:
+  grafana_data:
+
+networks:
+  ami-network:
+    driver: bridge

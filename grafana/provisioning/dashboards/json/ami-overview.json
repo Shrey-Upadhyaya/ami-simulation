@@ -1,0 +1,107 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "datasource": { "type": "influxdb", "uid": "influxdb" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "axisCenteredZero": false, "axisColorMode": "text", "axisLabel": "", "axisPlacement": "auto" },
+          "unit": "kwh"
+        }
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "id": 1,
+      "options": { "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true } },
+      "targets": [
+        {
+          "datasource": { "type": "influxdb", "uid": "influxdb" },
+          "query": "from(bucket: \"meter_readings\") |> range(start: v.timeRangeStart) |> filter(fn: (r) => r[\"_measurement\"] == \"meter_reading\" and r[\"_field\"] == \"kwh\") |> aggregateWindow(every: 1h, fn: sum, createEmpty: false) |> yield(name: \"mean\")",
+          "refId": "A"
+        }
+      ],
+      "title": "Total kWh by Hour",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "influxdb", "uid": "influxdb" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "axisCenteredZero": false, "axisColorMode": "text" },
+          "unit": "v"
+        }
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "id": 2,
+      "targets": [
+        {
+          "datasource": { "type": "influxdb", "uid": "influxdb" },
+          "query": "from(bucket: \"meter_readings\") |> range(start: v.timeRangeStart) |> filter(fn: (r) => r[\"_measurement\"] == \"meter_reading\" and r[\"_field\"] == \"voltage\") |> aggregateWindow(every: 5m, fn: mean, createEmpty: false) |> yield(name: \"mean\")",
+          "refId": "A"
+        }
+      ],
+      "title": "Voltage",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "influxdb", "uid": "influxdb" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "hideFrom": { "legend": false } }
+        }
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "id": 3,
+      "options": { "legend": { "displayMode": "list", "placement": "right" } },
+      "targets": [
+        {
+          "datasource": { "type": "influxdb", "uid": "influxdb" },
+          "query": "from(bucket: \"meter_readings\") |> range(start: v.timeRangeStart) |> filter(fn: (r) => r[\"_measurement\"] == \"meter_reading\" and r[\"_field\"] == \"kwh\") |> group(columns: [\"meter_id\"]) |> sum() |> yield(name: \"sum\")",
+          "refId": "A"
+        }
+      ],
+      "title": "Total kWh by Meter",
+      "type": "barchart"
+    },
+    {
+      "datasource": { "type": "influxdb", "uid": "influxdb" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" }
+        }
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "id": 4,
+      "targets": [
+        {
+          "datasource": { "type": "influxdb", "uid": "influxdb" },
+          "query": "from(bucket: \"meter_readings\") |> range(start: v.timeRangeStart) |> filter(fn: (r) => r[\"_measurement\"] == \"meter_reading\" and r[\"_field\"] == \"power_factor\") |> aggregateWindow(every: 15m, fn: mean, createEmpty: false) |> yield(name: \"mean\")",
+          "refId": "A"
+        }
+      ],
+      "title": "Power Factor",
+      "type": "timeseries"
+    }
+  ],
+  "refresh": "10s",
+  "schemaVersion": 38,
+  "style": "dark",
+  "tags": ["ami", "meters"],
+  "templating": { "list": [] },
+  "time": { "from": "now-1h", "to": "now" },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "AMI Meter Overview",
+  "uid": "ami-overview",
+  "version": 1
+}

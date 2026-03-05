@@ -1,0 +1,12 @@
+apiVersion: 1
+
+providers:
+  - name: "AMI Dashboards"
+    orgId: 1
+    folder: "AMI"
+    folderUid: "ami"
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30
+    options:
+      path: /etc/grafana/provisioning/dashboards/json
