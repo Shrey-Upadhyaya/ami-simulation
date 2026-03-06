@@ -1,0 +1,46 @@
+{
+  "simulation_type": "BATCH",
+  "generated_npt": "2026-03-06 18:39:52 NPT",
+  "start_date": "2026-02-27",
+  "days": 7,
+  "total_meters": 1000,
+  "total_readings": 672000,
+  "total_dtrs": 113,
+  "outage_summary": {
+    "total_events": 27,
+    "total_dtr_minutes": 6191,
+    "avg_duration_min": 229.3,
+    "affected_dtrs": 26
+  },
+  "consumer_mix": {
+    "COM": 338,
+    "DOM": 662
+  },
+  "subtype_mix": {
+    "COM_LV_1P": 145,
+    "COM_LV_3P": 120,
+    "DOM_SP_5A": 187,
+    "DOM_SP_15A": 276,
+    "DOM_3P_10KVA": 54,
+    "DOM_SP_30A": 57,
+    "DOM_SP_60A": 30,
+    "DOM_3P_25KVA": 36,
+    "COM_MV_11KV": 51,
+    "COM_MV_33KV": 22,
+    "DOM_3P_25KVA_PLUS": 22
+  },
+  "phase_mix": {
+    "1P": 695,
+    "3P": 305
+  },
+  "tariff_mix": {
+    "C1": 145,
+    "C2": 120,
+    "D1": 187,
+    "D2": 276,
+    "D3": 199,
+    "C3": 51,
+    "C4": 22
+  },
+  "tampered_meters": 12
+}
