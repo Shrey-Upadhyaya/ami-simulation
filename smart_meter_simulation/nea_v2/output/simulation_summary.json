@@ -1,16 +1,16 @@
 {
   "simulation_type": "BATCH",
-  "generated_npt": "2026-03-06 18:39:52 NPT",
-  "start_date": "2026-02-27",
-  "days": 7,
+  "generated_npt": "2026-03-07 10:14:35 NPT",
+  "start_date": "2026-03-06",
+  "days": 1,
   "total_meters": 1000,
-  "total_readings": 672000,
+  "total_readings": 96000,
   "total_dtrs": 113,
   "outage_summary": {
-    "total_events": 27,
-    "total_dtr_minutes": 6191,
-    "avg_duration_min": 229.3,
-    "affected_dtrs": 26
+    "total_events": 3,
+    "total_dtr_minutes": 574,
+    "avg_duration_min": 191.3,
+    "affected_dtrs": 3
   },
   "consumer_mix": {
     "COM": 338,

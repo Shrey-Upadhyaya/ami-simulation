@@ -267,9 +267,17 @@ WEEKDAY_MOD = {
 
 # ─── VOLTAGE PARAMETERS ───────────────────────────────────────────────────────
 NOMINAL_V = {"1P": 230.0, "3P": 400.0, "MV_11KV": 11000.0, "MV_33KV": 33000.0}
+# Phase-to-neutral for 3P (V_LL / √3 ≈ 231V for 400V system)
+NOMINAL_V_LN = {"3P": 230.0, "MV_11KV": 6351.0, "MV_33KV": 19053.0}
 
 # Low voltage probability by load tier (residential evening peak notorious in KTM)
 LV_PROB = {"off_peak": 0.02, "mid": 0.08, "peak": 0.22, "critical": 0.38}
+
+# Per-phase imbalance for advanced 3P metering (realistic load unbalance)
+# Current: each phase gets share in [1 - IMBALANCE, 1 + IMBALANCE] of balanced 1/3
+PHASE_CURRENT_IMBALANCE = 0.28   # ±28% — domestic/commercial often uneven
+# Voltage: phase-to-phase variation (V) around nominal
+PHASE_VOLTAGE_VARIATION = 4.0    # ±4V between phases typical on LV
 
 # ─── ANOMALY CONFIG ───────────────────────────────────────────────────────────
 ANOMALY = {
