@@ -1,0 +1,291 @@
+###############################################################################
+#  NEA AMI Data Pipeline — Docker Compose Stack
+#  Nepal Electricity Authority | Kathmandu Valley PoC
+#
+#  Services:
+#    1. mosquitto      — MQTT broker (IoT edge ingestion)
+#    2. kafka          — Apache Kafka KRaft (no Zookeeper)
+#    3. kafka-ui       — Provectus Kafka UI (topic browser)
+#    4. bridge         — MQTT→Kafka bridge (Python)
+#    5. timescaledb    — TimescaleDB (PostgreSQL + time-series)
+#    6. grafana        — Monitoring & dashboards
+#    7. simulator      — NEA smart meter data generator
+#
+#  Usage:
+#    docker compose up -d               # start all services
+#    docker compose up -d simulator     # start simulator only
+#    docker compose logs -f bridge      # watch bridge logs
+#    docker compose down -v             # stop + remove volumes
+###############################################################################
+
+services:
+
+  # ─── 1. MOSQUITTO MQTT BROKER ──────────────────────────────────────────────
+  mosquitto:
+    image: eclipse-mosquitto:2.0
+    container_name: nea_mosquitto
+    restart: unless-stopped
+    ports:
+      - "1883:1883"     # MQTT TCP (meters/DCUs connect here)
+      - "9001:9001"     # MQTT WebSocket (browser debug clients)
+    volumes:
+      - ./mosquitto/config/mosquitto.conf:/mosquitto/config/mosquitto.conf
+      - ./mosquitto/data:/mosquitto/data
+      - ./mosquitto/log:/mosquitto/log
+    networks:
+      - nea_ami_net
+    healthcheck:
+      test: ["CMD-SHELL", "mosquitto_sub -h 127.0.0.1 -t '$$SYS/#' -C 1 -i hc -W 3 || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
+
+  # ─── 2. KAFKA (KRaft mode — no Zookeeper) ─────────────────────────────────
+  kafka:
+    image: apache/kafka:3.7.0
+    container_name: nea_kafka
+    restart: unless-stopped
+    ports:
+      - "9092:9092"     # Kafka broker (internal + external)
+      - "9093:9093"     # KRaft controller port
+    environment:
+      # KRaft configuration
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      # Topic defaults
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
+      KAFKA_DEFAULT_REPLICATION_FACTOR: 1
+      KAFKA_NUM_PARTITIONS: 10
+      KAFKA_LOG_RETENTION_HOURS: 168        # 7 days retention
+      KAFKA_LOG_RETENTION_BYTES: 5368709120 # 5 GB max per topic
+      KAFKA_MESSAGE_MAX_BYTES: 1048576      # 1 MB max message
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      CLUSTER_ID: "nea-ami-kafka-cluster-01"
+    volumes:
+      - ./kafka/data:/var/lib/kafka/data
+    networks:
+      - nea_ami_net
+    healthcheck:
+      test: ["CMD", "/opt/kafka/bin/kafka-broker-api-versions.sh", "--bootstrap-server", "localhost:9092"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+
+  # ─── 3. KAFKA TOPIC INITIALIZER ───────────────────────────────────────────
+  kafka-init:
+    image: apache/kafka:3.7.0
+    container_name: nea_kafka_init
+    depends_on:
+      kafka:
+        condition: service_healthy
+    networks:
+      - nea_ami_net
+    entrypoint: ["/bin/bash", "-c"]
+    command: |
+      "
+      echo '=== Creating NEA AMI Kafka Topics ==='
+
+      /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 \
+        --create --if-not-exists \
+        --topic nea.meters.readings \
+        --partitions 10 \
+        --replication-factor 1 \
+        --config retention.ms=604800000 \
+        --config cleanup.policy=delete
+
+      /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 \
+        --create --if-not-exists \
+        --topic nea.meters.events \
+        --partitions 10 \
+        --replication-factor 1 \
+        --config retention.ms=2592000000 \
+        --config cleanup.policy=delete
+
+      /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 \
+        --create --if-not-exists \
+        --topic nea.meters.alerts \
+        --partitions 3 \
+        --replication-factor 1 \
+        --config retention.ms=2592000000
+
+      /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 \
+        --create --if-not-exists \
+        --topic nea.dcus.heartbeat \
+        --partitions 5 \
+        --replication-factor 1 \
+        --config retention.ms=86400000
+
+      echo '=== Topics created ==='
+      /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 --list
+      "
+    restart: on-failure
+
+  # ─── 4. KAFKA UI ──────────────────────────────────────────────────────────
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: nea_kafka_ui
+    restart: unless-stopped
+    ports:
+      - "8080:8080"     # Web UI → http://localhost:8080
+    environment:
+      KAFKA_CLUSTERS_0_NAME: "NEA-AMI-Cluster"
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: "kafka:9092"
+      DYNAMIC_CONFIG_ENABLED: "true"
+    depends_on:
+      kafka:
+        condition: service_healthy
+    networks:
+      - nea_ami_net
+
+  # ─── 5. MQTT → KAFKA BRIDGE ───────────────────────────────────────────────
+  bridge:
+    build:
+      context: ./bridge
+      dockerfile: Dockerfile
+    container_name: nea_bridge
+    restart: unless-stopped
+    environment:
+      MQTT_HOST: mosquitto
+      MQTT_PORT: "1883"
+      MQTT_CLIENT_ID: "nea-bridge-01"
+      MQTT_KEEPALIVE: "60"
+      KAFKA_BOOTSTRAP: "kafka:9092"
+      KAFKA_TOPIC_READINGS: "nea.meters.readings"
+      KAFKA_TOPIC_EVENTS: "nea.meters.events"
+      KAFKA_TOPIC_ALERTS: "nea.meters.alerts"
+      KAFKA_TOPIC_HEARTBEAT: "nea.dcus.heartbeat"
+      LOG_LEVEL: "INFO"
+    depends_on:
+      mosquitto:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      kafka-init:
+        condition: service_completed_successfully
+    networks:
+      - nea_ami_net
+
+  # ─── 6. TIMESCALEDB ───────────────────────────────────────────────────────
+  timescaledb:
+    image: timescale/timescaledb:latest-pg16
+    container_name: nea_timescaledb
+    restart: unless-stopped
+    ports:
+      - "5432:5432"     # PostgreSQL port
+    environment:
+      POSTGRES_DB: nea_ami
+      POSTGRES_USER: nea_user
+      POSTGRES_PASSWORD: nea_secure_pass
+      TIMESCALEDB_TELEMETRY: "off"
+    volumes:
+      - timescaledb_data:/var/lib/postgresql/data
+      - ./timescaledb/init:/docker-entrypoint-initdb.d:ro
+    networks:
+      - nea_ami_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nea_user -d nea_ami"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  # ─── 7. KAFKA → TIMESCALEDB WRITER ───────────────────────────────────────
+  db-writer:
+    build:
+      context: ./bridge
+      dockerfile: Dockerfile
+    container_name: nea_db_writer
+    restart: unless-stopped
+    command: ["python", "db_writer.py"]
+    environment:
+      KAFKA_BOOTSTRAP: "kafka:9092"
+      KAFKA_TOPIC_READINGS: "nea.meters.readings"
+      KAFKA_TOPIC_EVENTS: "nea.meters.events"
+      KAFKA_GROUP_ID: "nea-db-writer-group"
+      DB_HOST: timescaledb
+      DB_PORT: "5432"
+      DB_NAME: nea_ami
+      DB_USER: nea_user
+      DB_PASS: nea_secure_pass
+      BATCH_SIZE: "500"
+      FLUSH_INTERVAL_SEC: "5"
+    depends_on:
+      timescaledb:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      kafka-init:
+        condition: service_completed_successfully
+    networks:
+      - nea_ami_net
+
+  # ─── 8. GRAFANA ───────────────────────────────────────────────────────────
+  grafana:
+    image: grafana/grafana-oss:11.0.0
+    container_name: nea_grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"     # Grafana UI → http://localhost:3000
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: nea_grafana_pass
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_ALERTING_ENABLED: "false"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+    depends_on:
+      timescaledb:
+        condition: service_healthy
+    networks:
+      - nea_ami_net
+
+  # ─── 9. SIMULATOR ─────────────────────────────────────────────────────────
+  simulator:
+    build:
+      context: ./simulator
+      dockerfile: Dockerfile
+    container_name: nea_simulator
+    restart: unless-stopped
+    environment:
+      MQTT_HOST: mosquitto
+      MQTT_PORT: "1883"
+      MQTT_CLIENT_ID: "nea-simulator-dcs-01"
+      MQTT_QOS: "1"
+      SIM_SPEED: "60"        # 60x realtime: 1 tick (15min) every 1 second
+      SIM_METERS: "1000"
+      SIM_SEED: "42"
+      LOG_LEVEL: "INFO"
+    depends_on:
+      mosquitto:
+        condition: service_healthy
+      bridge:
+        condition: service_started
+    networks:
+      - nea_ami_net
+
+# ─── VOLUMES ──────────────────────────────────────────────────────────────────
+volumes:
+  timescaledb_data:
+    driver: local
+  grafana_data:
+    driver: local
+
+# ─── NETWORKS ─────────────────────────────────────────────────────────────────
+networks:
+  nea_ami_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16

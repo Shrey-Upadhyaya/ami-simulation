@@ -1,0 +1,174 @@
+{
+  "id": null,
+  "uid": "nea-ami-overview",
+  "title": "NEA AMI — Balaju Substation Overview",
+  "description": "Real-time smart meter monitoring for Balaju Primary Substation",
+  "tags": ["nea", "ami", "kathmandu"],
+  "timezone": "Asia/Kathmandu",
+  "refresh": "30s",
+  "time": { "from": "now-3h", "to": "now" },
+  "schemaVersion": 38,
+  "panels": [
+
+    {
+      "id": 1, "type": "stat", "gridPos": {"h": 4, "w": 4, "x": 0, "y": 0},
+      "title": "Active Meters",
+      "datasource": {"type": "postgres", "uid": "nea_tsdb"},
+      "fieldConfig": {
+        "defaults": { "color": {"mode": "thresholds"},
+          "thresholds": {"steps": [{"color":"red","value":0},{"color":"yellow","value":900},{"color":"green","value":980}]} }
+      },
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "background"},
+      "targets": [{
+        "rawSql": "SELECT NOW() as time, COUNT(DISTINCT meter_id) as value FROM interval_readings WHERE time > NOW() - INTERVAL '20 minutes' AND is_outage = false",
+        "format": "time_series"
+      }]
+    },
+
+    {
+      "id": 2, "type": "stat", "gridPos": {"h": 4, "w": 4, "x": 4, "y": 0},
+      "title": "Total Load Now (kW)",
+      "datasource": {"type": "postgres", "uid": "nea_tsdb"},
+      "fieldConfig": {
+        "defaults": { "unit": "kwatt", "color": {"mode": "thresholds"},
+          "thresholds": {"steps": [{"color":"green","value":0},{"color":"yellow","value":800},{"color":"red","value":1200}]} }
+      },
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "background"},
+      "targets": [{
+        "rawSql": "SELECT NOW() as time, SUM(active_power_kw) as value FROM interval_readings WHERE time > NOW() - INTERVAL '20 minutes'",
+        "format": "time_series"
+      }]
+    },
+
+    {
+      "id": 3, "type": "stat", "gridPos": {"h": 4, "w": 4, "x": 8, "y": 0},
+      "title": "Active Outages (DTRs)",
+      "datasource": {"type": "postgres", "uid": "nea_tsdb"},
+      "fieldConfig": {
+        "defaults": { "color": {"mode": "thresholds"},
+          "thresholds": {"steps": [{"color":"green","value":0},{"color":"yellow","value":1},{"color":"red","value":3}]} }
+      },
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "background"},
+      "targets": [{
+        "rawSql": "SELECT NOW() as time, COUNT(DISTINCT dtr_id) as value FROM interval_readings WHERE time > NOW() - INTERVAL '20 minutes' AND is_outage = true",
+        "format": "time_series"
+      }]
+    },
+
+    {
+      "id": 4, "type": "stat", "gridPos": {"h": 4, "w": 4, "x": 12, "y": 0},
+      "title": "Voltage Events (1h)",
+      "datasource": {"type": "postgres", "uid": "nea_tsdb"},
+      "fieldConfig": {
+        "defaults": { "color": {"mode": "thresholds"},
+          "thresholds": {"steps": [{"color":"green","value":0},{"color":"yellow","value":50},{"color":"red","value":200}]} }
+      },
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "background"},
+      "targets": [{
+        "rawSql": "SELECT NOW() as time, COUNT(*) as value FROM interval_readings WHERE time > NOW() - INTERVAL '1 hour' AND is_voltage_event = true",
+        "format": "time_series"
+      }]
+    },
+
+    {
+      "id": 5, "type": "stat", "gridPos": {"h": 4, "w": 4, "x": 16, "y": 0},
+      "title": "Unacked Tamper Alerts",
+      "datasource": {"type": "postgres", "uid": "nea_tsdb"},
+      "fieldConfig": {
+        "defaults": { "color": {"mode": "thresholds"},
+          "thresholds": {"steps": [{"color":"green","value":0},{"color":"red","value":1}]} }
+      },
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "background"},
+      "targets": [{
+        "rawSql": "SELECT NOW() as time, COUNT(*) as value FROM meter_events WHERE is_acknowledged = false AND event_category = 'TAMPER'",
+        "format": "time_series"
+      }]
+    },
+
+    {
+      "id": 6, "type": "stat", "gridPos": {"h": 4, "w": 4, "x": 20, "y": 0},
+      "title": "Avg Voltage (V)",
+      "datasource": {"type": "postgres", "uid": "nea_tsdb"},
+      "fieldConfig": {
+        "defaults": { "unit": "volt", "decimals": 1, "color": {"mode": "thresholds"},
+          "thresholds": {"steps": [{"color":"red","value":0},{"color":"yellow","value":207},{"color":"green","value":215},{"color":"yellow","value":245},{"color":"red","value":253}]} }
+      },
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "value"},
+      "targets": [{
+        "rawSql": "SELECT NOW() as time, ROUND(AVG(voltage_v)::numeric, 1) as value FROM interval_readings WHERE time > NOW() - INTERVAL '20 minutes' AND phase = '1P' AND voltage_v > 0",
+        "format": "time_series"
+      }]
+    },
+
+    {
+      "id": 10, "type": "timeseries", "gridPos": {"h": 8, "w": 12, "x": 0, "y": 4},
+      "title": "Feeder Load Profile — Total kW by Feeder",
+      "datasource": {"type": "postgres", "uid": "nea_tsdb"},
+      "fieldConfig": { "defaults": { "unit": "kwatt" } },
+      "options": { "tooltip": {"mode": "multi"} },
+      "targets": [{
+        "rawSql": "SELECT time_bucket('15 minutes', time) AS time, feeder_id, SUM(active_power_kw) AS kw FROM interval_readings WHERE $__timeFilter(time) GROUP BY 1, feeder_id ORDER BY 1",
+        "format": "time_series"
+      }]
+    },
+
+    {
+      "id": 11, "type": "timeseries", "gridPos": {"h": 8, "w": 12, "x": 12, "y": 4},
+      "title": "Voltage Profile — Avg & Min by Feeder (1P LV)",
+      "datasource": {"type": "postgres", "uid": "nea_tsdb"},
+      "fieldConfig": {
+        "defaults": { "unit": "volt" },
+        "overrides": [{"matcher":{"id":"byName","options":"min_v"},"properties":[{"id":"custom.lineStyle","value":{"dash":[5,5],"fill":"dash"}}]}]
+      },
+      "targets": [{
+        "rawSql": "SELECT time_bucket('15 minutes', time) AS time, feeder_id || '_avg' AS metric, AVG(voltage_v) AS value FROM interval_readings WHERE $__timeFilter(time) AND phase = '1P' AND voltage_v > 0 GROUP BY 1, feeder_id ORDER BY 1",
+        "format": "time_series"
+      }]
+    },
+
+    {
+      "id": 12, "type": "timeseries", "gridPos": {"h": 8, "w": 12, "x": 0, "y": 12},
+      "title": "DOM vs COM Load Split",
+      "datasource": {"type": "postgres", "uid": "nea_tsdb"},
+      "fieldConfig": { "defaults": { "unit": "kwatt" } },
+      "options": { "tooltip": {"mode": "multi"} },
+      "targets": [{
+        "rawSql": "SELECT time_bucket('15 minutes', time) AS time, consumer_category, SUM(active_power_kw) AS kw FROM interval_readings WHERE $__timeFilter(time) GROUP BY 1, consumer_category ORDER BY 1",
+        "format": "time_series"
+      }]
+    },
+
+    {
+      "id": 13, "type": "timeseries", "gridPos": {"h": 8, "w": 12, "x": 12, "y": 12},
+      "title": "Energy Import — Cumulative by Consumer Subtype (kWh)",
+      "datasource": {"type": "postgres", "uid": "nea_tsdb"},
+      "fieldConfig": { "defaults": { "unit": "kwatth" } },
+      "targets": [{
+        "rawSql": "SELECT time_bucket('1 hour', time) AS time, consumer_subtype, SUM(import_kwh) AS kwh FROM interval_readings WHERE $__timeFilter(time) GROUP BY 1, consumer_subtype ORDER BY 1",
+        "format": "time_series"
+      }]
+    },
+
+    {
+      "id": 20, "type": "table", "gridPos": {"h": 8, "w": 12, "x": 0, "y": 20},
+      "title": "Active Alerts — Unacknowledged",
+      "datasource": {"type": "postgres", "uid": "nea_tsdb"},
+      "options": {"sortBy": [{"displayName": "time", "desc": true}]},
+      "targets": [{
+        "rawSql": "SELECT e.time, e.meter_serial, e.feeder_id, e.event_category, e.event_code, e.severity, m.consumer_name, m.consumer_subtype FROM meter_events e LEFT JOIN meter_registry m ON e.meter_id = m.meter_id WHERE e.is_acknowledged = false AND e.severity IN ('WARNING','CRITICAL') ORDER BY e.time DESC LIMIT 50",
+        "format": "table"
+      }]
+    },
+
+    {
+      "id": 21, "type": "barchart", "gridPos": {"h": 8, "w": 12, "x": 12, "y": 20},
+      "title": "Events by Category (Last 24h)",
+      "datasource": {"type": "postgres", "uid": "nea_tsdb"},
+      "targets": [{
+        "rawSql": "SELECT event_category, COUNT(*) as count FROM meter_events WHERE time > NOW() - INTERVAL '24 hours' GROUP BY event_category ORDER BY count DESC",
+        "format": "table"
+      }]
+    }
+
+  ]
+}

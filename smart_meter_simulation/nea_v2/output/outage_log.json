@@ -1,46 +1,250 @@
 {
   "summary": {
-    "total_events": 3,
-    "total_dtr_minutes": 574,
-    "avg_duration_min": 191.3,
-    "affected_dtrs": 3
+    "total_events": 20,
+    "total_dtr_minutes": 4419,
+    "avg_duration_min": 220.9,
+    "affected_dtrs": 20
   },
   "events": [
     {
       "event": "OUTAGE",
-      "dtr_id": "DTR_FDR_08_03",
-      "type": "DTR_FAILURE",
-      "start": "2026-03-06 16:15:00+05:45",
-      "dur_min": 230
-    },
-    {
-      "event": "OUTAGE",
-      "dtr_id": "DTR_FDR_01_17_MV",
+      "dtr_id": "DTR_FDR_08_11_MV",
       "type": "CABLE_FAULT",
-      "start": "2026-03-06 18:00:00+05:45",
-      "dur_min": 222
-    },
-    {
-      "event": "RESTORED",
-      "dtr_id": "DTR_FDR_08_03",
-      "time": "2026-03-06 20:15:00+05:45"
+      "start": "2026-03-01 07:30:00+05:45",
+      "dur_min": 213
     },
     {
       "event": "OUTAGE",
-      "dtr_id": "DTR_FDR_05_08_MV",
+      "dtr_id": "DTR_FDR_08_09_MV",
+      "type": "CABLE_FAULT",
+      "start": "2026-03-01 08:00:00+05:45",
+      "dur_min": 346
+    },
+    {
+      "event": "RESTORED",
+      "dtr_id": "DTR_FDR_08_11_MV",
+      "time": "2026-03-01 11:15:00+05:45"
+    },
+    {
+      "event": "OUTAGE",
+      "dtr_id": "DTR_FDR_08_08_MV",
+      "type": "CABLE_FAULT",
+      "start": "2026-03-01 13:00:00+05:45",
+      "dur_min": 120
+    },
+    {
+      "event": "RESTORED",
+      "dtr_id": "DTR_FDR_08_09_MV",
+      "time": "2026-03-01 14:00:00+05:45"
+    },
+    {
+      "event": "RESTORED",
+      "dtr_id": "DTR_FDR_08_08_MV",
+      "time": "2026-03-01 15:00:00+05:45"
+    },
+    {
+      "event": "OUTAGE",
+      "dtr_id": "DTR_FDR_10_18_MV",
+      "type": "ANIMAL_CONTACT",
+      "start": "2026-03-01 18:45:00+05:45",
+      "dur_min": 51
+    },
+    {
+      "event": "OUTAGE",
+      "dtr_id": "DTR_FDR_02_04",
+      "type": "DTR_FAILURE",
+      "start": "2026-03-01 19:30:00+05:45",
+      "dur_min": 244
+    },
+    {
+      "event": "RESTORED",
+      "dtr_id": "DTR_FDR_10_18_MV",
+      "time": "2026-03-01 19:45:00+05:45"
+    },
+    {
+      "event": "RESTORED",
+      "dtr_id": "DTR_FDR_02_04",
+      "time": "2026-03-01 23:45:00+05:45"
+    },
+    {
+      "event": "OUTAGE",
+      "dtr_id": "DTR_FDR_05_05_MV",
       "type": "TREE_CONTACT",
-      "start": "2026-03-06 20:15:00+05:45",
-      "dur_min": 122
+      "start": "2026-03-02 00:45:00+05:45",
+      "dur_min": 360
+    },
+    {
+      "event": "OUTAGE",
+      "dtr_id": "DTR_FDR_08_13_MV",
+      "type": "DTR_FAILURE",
+      "start": "2026-03-02 03:00:00+05:45",
+      "dur_min": 15
     },
     {
       "event": "RESTORED",
-      "dtr_id": "DTR_FDR_01_17_MV",
-      "time": "2026-03-06 21:45:00+05:45"
+      "dtr_id": "DTR_FDR_08_13_MV",
+      "time": "2026-03-02 03:15:00+05:45"
     },
     {
       "event": "RESTORED",
-      "dtr_id": "DTR_FDR_05_08_MV",
-      "time": "2026-03-06 22:30:00+05:45"
+      "dtr_id": "DTR_FDR_05_05_MV",
+      "time": "2026-03-02 06:45:00+05:45"
+    },
+    {
+      "event": "OUTAGE",
+      "dtr_id": "DTR_FDR_01_07_MV",
+      "type": "DTR_FAILURE",
+      "start": "2026-03-02 18:15:00+05:45",
+      "dur_min": 93
+    },
+    {
+      "event": "RESTORED",
+      "dtr_id": "DTR_FDR_01_07_MV",
+      "time": "2026-03-02 20:00:00+05:45"
+    },
+    {
+      "event": "OUTAGE",
+      "dtr_id": "DTR_FDR_05_12_MV",
+      "type": "FUSE_BLOW",
+      "start": "2026-03-04 03:15:00+05:45",
+      "dur_min": 111
+    },
+    {
+      "event": "RESTORED",
+      "dtr_id": "DTR_FDR_05_12_MV",
+      "time": "2026-03-04 05:15:00+05:45"
+    },
+    {
+      "event": "OUTAGE",
+      "dtr_id": "DTR_FDR_01_10_MV",
+      "type": "FUSE_BLOW",
+      "start": "2026-03-04 07:15:00+05:45",
+      "dur_min": 63
+    },
+    {
+      "event": "OUTAGE",
+      "dtr_id": "DTR_FDR_08_02",
+      "type": "TREE_CONTACT",
+      "start": "2026-03-04 08:00:00+05:45",
+      "dur_min": 370
+    },
+    {
+      "event": "RESTORED",
+      "dtr_id": "DTR_FDR_01_10_MV",
+      "time": "2026-03-04 08:30:00+05:45"
+    },
+    {
+      "event": "RESTORED",
+      "dtr_id": "DTR_FDR_08_02",
+      "time": "2026-03-04 14:15:00+05:45"
+    },
+    {
+      "event": "OUTAGE",
+      "dtr_id": "DTR_FDR_03_01",
+      "type": "DTR_FAILURE",
+      "start": "2026-03-04 17:30:00+05:45",
+      "dur_min": 69
+    },
+    {
+      "event": "RESTORED",
+      "dtr_id": "DTR_FDR_03_01",
+      "time": "2026-03-04 18:45:00+05:45"
+    },
+    {
+      "event": "OUTAGE",
+      "dtr_id": "DTR_FDR_10_04",
+      "type": "FUSE_BLOW",
+      "start": "2026-03-05 20:00:00+05:45",
+      "dur_min": 449
+    },
+    {
+      "event": "OUTAGE",
+      "dtr_id": "DTR_FDR_04_01",
+      "type": "TREE_CONTACT",
+      "start": "2026-03-05 23:45:00+05:45",
+      "dur_min": 354
+    },
+    {
+      "event": "RESTORED",
+      "dtr_id": "DTR_FDR_10_04",
+      "time": "2026-03-06 03:30:00+05:45"
+    },
+    {
+      "event": "OUTAGE",
+      "dtr_id": "DTR_FDR_07_03",
+      "type": "DTR_FAILURE",
+      "start": "2026-03-06 03:45:00+05:45",
+      "dur_min": 278
+    },
+    {
+      "event": "OUTAGE",
+      "dtr_id": "DTR_FDR_01_15_MV",
+      "type": "FUSE_BLOW",
+      "start": "2026-03-06 05:00:00+05:45",
+      "dur_min": 262
+    },
+    {
+      "event": "RESTORED",
+      "dtr_id": "DTR_FDR_04_01",
+      "time": "2026-03-06 05:45:00+05:45"
+    },
+    {
+      "event": "RESTORED",
+      "dtr_id": "DTR_FDR_07_03",
+      "time": "2026-03-06 08:30:00+05:45"
+    },
+    {
+      "event": "RESTORED",
+      "dtr_id": "DTR_FDR_01_15_MV",
+      "time": "2026-03-06 09:30:00+05:45"
+    },
+    {
+      "event": "OUTAGE",
+      "dtr_id": "DTR_FDR_10_16_MV",
+      "type": "DTR_FAILURE",
+      "start": "2026-03-06 10:00:00+05:45",
+      "dur_min": 223
+    },
+    {
+      "event": "RESTORED",
+      "dtr_id": "DTR_FDR_10_16_MV",
+      "time": "2026-03-06 13:45:00+05:45"
+    },
+    {
+      "event": "OUTAGE",
+      "dtr_id": "DTR_FDR_06_05_MV",
+      "type": "TREE_CONTACT",
+      "start": "2026-03-06 19:00:00+05:45",
+      "dur_min": 313
+    },
+    {
+      "event": "RESTORED",
+      "dtr_id": "DTR_FDR_06_05_MV",
+      "time": "2026-03-07 00:15:00+05:45"
+    },
+    {
+      "event": "OUTAGE",
+      "dtr_id": "DTR_FDR_06_06_MV",
+      "type": "TREE_CONTACT",
+      "start": "2026-03-07 05:45:00+05:45",
+      "dur_min": 466
+    },
+    {
+      "event": "OUTAGE",
+      "dtr_id": "DTR_FDR_04_04",
+      "type": "TREE_CONTACT",
+      "start": "2026-03-07 11:45:00+05:45",
+      "dur_min": 19
+    },
+    {
+      "event": "RESTORED",
+      "dtr_id": "DTR_FDR_04_04",
+      "time": "2026-03-07 12:15:00+05:45"
+    },
+    {
+      "event": "RESTORED",
+      "dtr_id": "DTR_FDR_06_06_MV",
+      "time": "2026-03-07 13:45:00+05:45"
     }
   ]
 }
